@@ -1,0 +1,11 @@
+broadcast_am    314
+china_oth_160   264
+cw              268
+hfdl            267
+lsb             95
+usb             437
+ft              253
+rtty            257
+ofdm            286
+mfsk            68
+stanag_wbhf     261
