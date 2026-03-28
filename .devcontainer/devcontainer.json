@@ -1,0 +1,39 @@
+{
+	"name": "hfml - ${localEnv:USER}",
+	"image": "hfml",
+	"remoteUser": "vscode",
+
+	"runArgs": [ "--gpus", "all", "--runtime=nvidia", "--ipc=host", "--ulimit", "memlock=-1", "--ulimit", "stack=67108864", "--shm-size=512M", "--net=host"],
+
+	"mounts": [
+		// Pull in SSH keys so git can be used inside container 
+		{
+			"source": "/home/${localEnv:USER}/.ssh",
+			"target": "/home/vscode/.ssh",
+			"type": "bind"
+		}
+	],
+
+	"containerEnv": {
+		"http_proxy": "${localEnv:http_proxy}",
+		"https_proxy": "${localEnv:http_proxy}",
+		"HTTP_PROXY": "${localEnv:http_proxy}",
+		"HTTPS_PROXY": "${localEnv:http_proxy}",
+		"DISPLAY": "${localEnv:DISPLAY}"
+	},
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"VisualStudioExptTeam.vscodeintellicode",
+				"ms-python.autopep8",
+				"eamodio.gitlens",
+				"ms-toolsai.jupyter",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	},
+	"shutdownAction": "none"
+}
