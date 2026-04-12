@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/apt/lists/*
 
 ARG CUDA_VERSION=129
-ARG PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu{ARG CUDA_VERSION}
+ARG PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu${CUDA_VERSION}
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -40,7 +40,6 @@ RUN userdel -r ubuntu \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && chsh -s /bin/bash $USERNAME
-
 
 RUN if [ -n "${PIP_EXTRA_INDEX_URL}" ]; then \ 
       python3 -m pip install --no-cache-dir --break-system-packages --extra-index-url "${PIP_EXTRA_INDEX_URL}" torch; \
@@ -65,7 +64,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     ipykernel \
     pandas \
     pillow \
-    opencv-python \
+    opencv-python-headless \
     torch-tb-profiler \
     torchvision \
     tqdm \
