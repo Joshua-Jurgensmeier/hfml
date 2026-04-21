@@ -1,0 +1,80 @@
+FROM dustynv/l4t-pytorch:r36.4.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# set timezone to avoid questions during apt installs
+RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+
+RUN apt-get update && apt-get install -y --no-install-recommends \ 
+    build-essential \
+    ca-certificates \
+    curl \
+    git \
+    usbutils \
+    python3 \
+    python3-pip \
+    python3-dev \
+    python-is-python3 \
+    libopencv-dev \
+    cmake \
+    libusb-dev \
+    libusb-1.0-0-dev \
+&& rm -rf /var/lib/apt/lists/*
+
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    && chsh -s /bin/bash $USERNAME
+
+
+# Build librtl from source
+RUN wget https://github.com/librtlsdr/librtlsdr/archive/refs/tags/v0.9.0.tar.gz \
+    && tar -xf v0.9.0.tar.gz \
+    && cd librtlsdr-0.9.0 \
+    && mkdir build && cd build \
+    && cmake ../ \
+    && make \
+    && make install \
+    && ldconfig
+
+# Install Python packages
+RUN echo "numpy<2" > constraints.txt && pip3 install -c constraints.txt --no-cache-dir --index-url https://pypi.python.org/simple \
+    numpy \
+    matplotlib \
+    scipy \
+    tensorboard \
+    einops \
+    setuptools \
+    ipykernel \
+    pandas \
+    pillow \
+    torch-tb-profiler \
+    tqdm \
+    requests \
+    pyrtlsdr \
+    loguru \
+    thop \
+    ninja \
+    tabulate \
+    psutil \
+    pycocotools \
+    onnx \
+    opencv-python
+# Need pre numpy 2 versions
+ENV PIP_INDEX_URL=
+# Install YOLOX
+RUN git clone https://github.com/Megvii-BaseDetection/YOLOX.git \
+    && cd YOLOX \
+    && sed -i 's/^onnx-simplifier[[:space:]]*==[[:space:]]*[^[:space:]]*//' requirements.txt \
+    && python setup.py install
+
+USER $USERNAME
+CMD ["bash"]

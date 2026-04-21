@@ -3,13 +3,27 @@
 	"image": "hfml",
 	"remoteUser": "vscode",
 
-	"runArgs": [ "--gpus", "all", "--runtime=nvidia", "--ipc=host", "--ulimit", "memlock=-1", "--ulimit", "stack=67108864", "--shm-size=512M", "--net=host"],
+	"runArgs": [
+		"--gpus", "all", 
+		"--runtime=nvidia",
+		"--ipc=host",
+		"--ulimit",
+		"memlock=-1",
+		"--ulimit", "stack=67108864",
+		"--shm-size=512M",
+		"--net=host",
+		"--privileged"],
 
 	"mounts": [
 		// Pull in SSH keys so git can be used inside container 
 		{
 			"source": "/home/${localEnv:USER}/.ssh",
 			"target": "/home/vscode/.ssh",
+			"type": "bind"
+		},
+		{
+			"source": "/dev/bus/usb/",
+			"target": "/dev/bus/usb/",
 			"type": "bind"
 		}
 	],
@@ -27,13 +41,10 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-				"VisualStudioExptTeam.vscodeintellicode",
 				"ms-python.autopep8",
-				"eamodio.gitlens",
 				"ms-toolsai.jupyter",
 				"ms-azuretools.vscode-docker"
 			]
 		}
-	},
-	"shutdownAction": "none"
+	}
 }
