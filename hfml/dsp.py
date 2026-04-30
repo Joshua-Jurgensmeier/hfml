@@ -1,3 +1,5 @@
+# Copyright Joshua Jurgensmeier 2026
+
 import torch
 import torch.nn as nn
 from einops import rearrange
@@ -23,6 +25,7 @@ class EnergyDetector(nn.Module):
 
 class Spectrogrammer(nn.Module):
     def __init__(self, nfft, hop_overlap, num_channels):
+        super().__init__()
         self.nfft = nfft
         self.hop_length = int(nfft * hop_overlap)
         self.window = torch.hann_window(nfft, periodic=True)

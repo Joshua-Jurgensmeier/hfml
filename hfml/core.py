@@ -1,9 +1,15 @@
+# Copyright Joshua Jurgensmeier 2026
+
 import torch
 from yolox.data.data_augment import ValTransform
 from yolox.utils import postprocess, vis
 import time
+import io
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np
 
-HFML_CLASSES = ("0", "1", "2", "3", "4", "5", "6", "7")
+HFML_CLASSES = ("broadcast_am", "china_oth_160", "ft", "hfdl", "ofdm", "rtty", "stanag_wbhf", "usb")
 
 class Predictor(object):
     def __init__(
@@ -24,15 +30,6 @@ class Predictor(object):
         self.device = device
         self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
-        # if trt_file is not None:
-        #     from torch2trt import TRTModule
-
-        #     model_trt = TRTModule()
-        #     model_trt.load_state_dict(torch.load(trt_file))
-
-        #     x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
-        #     self.model(x)
-        #     self.model = model_trt
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -61,7 +58,6 @@ class Predictor(object):
                 outputs, self.num_classes, self.confthre,
                 self.nmsthre, class_agnostic=True
             )
-            print("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
 
     def visual(self, output, img_info, cls_conf=0.35):
@@ -92,10 +88,22 @@ class HFML:
             noise_floor_dB = noise_floor_dB.mean()
             if detects.any():
                 detected_sgs = sgs[detects]
-                imgs: torch.Tensor = detected_sgs.clamp(max=noise_floor_dB+self.clamp_dB)
-                imgs = imgs.cpu().numpy()
-                outputs, img_info = self.predictor.inference(imgs)
-                return outputs, img_info
+                detected_sgs: torch.Tensor = detected_sgs.clamp(max=noise_floor_dB+self.clamp_dB)
+                detected_sgs = detected_sgs.cpu().numpy()
+                
+                print(f"detected {detected_sgs.shape[0]} spectrograms")
+                print(detects)
+                outputs = []
+                img_infos = []
+                for sg in detected_sgs:
+                    buf = io.BytesIO()
+                    plt.imsave(buf, sg, cmap='inferno', vmin=noise_floor_dB+2, vmax=noise_floor_dB+self.clamp_dB)
+                    buf.seek(0)
+                    img = cv2.imdecode(np.frombuffer(buf.read(),np.uint8),1)
+                    op, ii = self.predictor.inference(img)
+                    outputs.append(op)
+                    img_infos.append(ii)
+                return outputs, img_infos
             else:
                 return None, None
         

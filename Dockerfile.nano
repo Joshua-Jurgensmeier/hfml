@@ -1,5 +1,8 @@
 FROM dustynv/l4t-pytorch:r36.4.0
 
+# Copyright Joshua Jurgensmeier 2026
+
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 # set timezone to avoid questions during apt installs

@@ -12,7 +12,8 @@
 		"--ulimit", "stack=67108864",
 		"--shm-size=512M",
 		"--net=host",
-		"--privileged"],
+		// "--privileged" // Add --privileged for RTL-SDR USB access
+	],
 
 	"mounts": [
 		// Pull in SSH keys so git can be used inside container 
@@ -21,11 +22,11 @@
 			"target": "/home/vscode/.ssh",
 			"type": "bind"
 		},
-		{
-			"source": "/dev/bus/usb/",
-			"target": "/dev/bus/usb/",
-			"type": "bind"
-		}
+		// { // Add this mount for RTL-SDR USB access
+		// 	"source": "/dev/bus/usb/",
+		// 	"target": "/dev/bus/usb/",
+		// 	"type": "bind"
+		// }
 	],
 
 	"containerEnv": {

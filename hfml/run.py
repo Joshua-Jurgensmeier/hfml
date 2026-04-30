@@ -1,3 +1,5 @@
+# Copyright Joshua Jurgensmeier 2026
+
 import datetime
 from pathlib import Path
 import time
@@ -101,6 +103,11 @@ def main(exp, args):
     spg = Spectrogrammer(NFFT, hop_factor, M)
     sdr = get_sdr(fs, args.fc)
     model = exp.get_model()
+    
+    ckpt = torch.load(args.ckpt, map_location="cpu", weights_only=False)
+    # load the model state dict
+    model.load_state_dict(ckpt["model"])
+    print("loaded checkpoint done.")
 
     cmplx_dtype = torch.complex64
     if args.device == "gpu":
@@ -114,29 +121,13 @@ def main(exp, args):
 
     hfml = HFML(ed, spg, predictor)
 
-    # cap = cv2.VideoCapture(args.path if args.demo == "video" else args.camid)
-    # width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
-    # height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
-    # fps = cap.get(cv2.CAP_PROP_FPS)
-    # if args.save_result:
-    #     save_folder = os.path.join(
-    #         vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-    #     )
-    #     os.makedirs(save_folder, exist_ok=True)
-    #     if args.demo == "video":
-    #         save_path = os.path.join(save_folder, os.path.basename(args.path))
-    #     else:
-    #         save_path = os.path.join(save_folder, "camera.mp4")
-    #     logger.info(f"video save_path is {save_path}")
-    #     vid_writer = cv2.VideoWriter(
-    #         save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
-    #     )
-
-    current_time = time.localtime()
-    vis_folder = ""
+    vis_folder = "out"
+    os.makedirs(vis_folder, exist_ok=True)
+    cap_id = 0
 
     # Output config
     print(f"Model Summary: {get_model_info(model, exp.test_size)}")
+
     while True:
 
         x_frame = []
@@ -145,24 +136,25 @@ def main(exp, args):
         
         x = torch.tensor(np.concatenate(x_frame, axis=-1), dtype=cmplx_dtype)
 
-        outputs, img_info = hfml.inference(x)
+        outputs, img_infos = hfml.inference(x)
+        print("Finshed processing")
+
+        print("visualizing")
         if outputs is not None:
-            result_image = hfml.visual(outputs[0], img_info, predictor.confthre)
-            if args.save_result:
-                save_folder = os.path.join(
-                    vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-                )
-                os.makedirs(save_folder, exist_ok=True)
-                save_file_name = os.path.join(save_folder, os.path.basename(time.localtime()))
-                cv2.imwrite(save_file_name, result_image)
-            else:
-                cv2.namedWindow("yolox", cv2.WINDOW_NORMAL)
-                cv2.imshow("yolox", result_image)
-                ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord("q") or ch == ord("Q"):
-                break
-        else:
-            break
+            for output, img_info in zip(outputs,img_infos):
+                if output[0] is not None:
+                    result_image = hfml.visual(output[0], img_info, predictor.confthre)
+                    if args.save_result:
+                        print("Writing result")
+                        save_file_name = os.path.join(vis_folder, f"cap_{cap_id}.png")
+                        cv2.imwrite(save_file_name, result_image)
+                    else:
+                        cv2.namedWindow("yolox", cv2.WINDOW_NORMAL)
+                        cv2.imshow("yolox", result_image)
+                        ch = cv2.waitKey(0)
+                        if ch == 27 or ch == ord("q") or ch == ord("Q"):
+                            break
+                    cap_id = cap_id + 1
 
 if __name__ == "__main__":
     args = make_parser().parse_args()

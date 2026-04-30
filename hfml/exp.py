@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
-
-# CUDA_VISIBLE_DEVICES=1,2,3,4,5,6 python3 train.py -b 288 -f exp.py
+# Copyright Joshua Jurgensmeier 2026
 
 import os
 
@@ -23,30 +20,29 @@ class Exp(MyExp):
         self.data_dir = "/workspaces/hfml/dataset"
         self.train_ann = "train.json"
         self.val_ann = "val.json"
-        # self.test_ann = "result.json"
 
-        # Disable transforms that don't make sense
-        # self.mosaic_prob = 0.50
-        # self.mosaic_scale = (0.5, 1.5)
+        # Even though some of these don't make sense, they work...
+        self.mosaic_prob = 0.50
+        self.mosaic_scale = (0.5, 1.5)
         self.hsv_prob = 0.
         self.flip_prob = 0.
         self.degrees = 0.
         self.translate = 0.05
         self.shear = 0.
-        # self.enable_mixup = True
-        # self.mixup_prob = 0.50
-        # self.mixup_scale = (0.5, 1.5)
-        self.no_aug_epochs = 50
+        self.enable_mixup = True
+        self.mixup_prob = 0.50
+        self.mixup_scale = (0.5, 1.5)
+        self.no_aug_epochs = 30
 
         # TODO: Add time/frequency masks to emulate fades. Noise injection, circular shift
 
         self.test_size = (1024, 1024)
         # confidence threshold during evaluation/test,
         # boxes whose scores are less than test_conf will be filtered
-        self.test_conf = 0.01
-        # nms threshold
+        self.test_conf = 0.4
         self.nmsthre = 0.65
 
+        self.max_epoch = 150
         self.print_interval = 1 # Have to set this lower because batch size is high.
         self.eval_interval = 15
         # save history checkpoint or not.
